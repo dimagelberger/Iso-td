@@ -1,0 +1,4 @@
+kenny/
+.claude/
+*.ps1
+server.py
