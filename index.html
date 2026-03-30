@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>iso-td</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0f1117; overflow: hidden; font-family: monospace; }
+    canvas { display: block; }
+
+    /* ── Top bar ──────────────────────────────────────────────────────────── */
+    #topbar {
+      position: absolute; top: 0; left: 0; right: 0; height: 48px;
+      background: rgba(5,9,18,0.82);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 18px; z-index: 40;
+      font-family: monospace; user-select: none; pointer-events: none;
+    }
+    #tb-left  { display: flex; align-items: center; gap: 20px; pointer-events: none; }
+    #tb-right { display: flex; align-items: center; gap: 10px; pointer-events: auto; }
+    .tb-stat  { display: flex; align-items: center; gap: 7px; }
+    .tb-icon  { font-size: 15px; line-height: 1; }
+    .tb-lbl   { color: #445; font-size: 8px; letter-spacing: 0.14em; }
+    .tb-val   { color: #dde; font-size: 18px; font-weight: bold; line-height: 1; }
+    .tb-val.gold   { color: #ffd060; }
+    .tb-val.danger { color: #e05050; }
+    .tb-div   { width: 1px; height: 22px; background: rgba(255,255,255,0.08); }
+    #prep-badge {
+      display: none; align-items: center; gap: 8px;
+      background: rgba(50,200,90,0.10); border: 1px solid rgba(50,200,90,0.25);
+      border-radius: 5px; padding: 3px 10px;
+    }
+    #prep-lbl { color: #3d8; font-size: 8px; letter-spacing: 0.12em; }
+    #hud-prep { color: #3d8; font-size: 15px; font-weight: bold; }
+    /* 2 px progress strip along topbar bottom edge */
+    #prep-bar-wrap {
+      position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+      background: rgba(255,255,255,0.04);
+    }
+    #prep-bar { height: 100%; background: linear-gradient(90deg,#2a8,#7fd); width: 100%; transition: width 0.1s linear; }
+    /* Wave button (inside topbar) */
+    #wave-btn {
+      background: linear-gradient(150deg,#163350,#0d2238);
+      border: 2px solid #3a7aaa; color: #7ec8ff;
+      font-family: monospace; font-size: 12px; font-weight: bold;
+      padding: 7px 22px; border-radius: 6px; cursor: pointer; letter-spacing: 0.06em;
+      transition: background 0.13s, border-color 0.13s;
+    }
+    #wave-btn:hover:not(:disabled) { background: linear-gradient(150deg,#1e4a70,#132e4a); border-color: #5aaae0; }
+    #wave-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    #wave-sub { color: #445; font-size: 9px; letter-spacing: 0.05em; max-width: 160px; }
+
+    /* ── Speed buttons ─────────────────────────────────────────────────────── */
+    #speed-btns { display: flex; gap: 4px; }
+    .spd-btn {
+      background: rgba(5,9,18,0.7); border: 1px solid #1e2e44; color: #7ec8ff;
+      font-family: monospace; font-size: 11px; padding: 5px 9px;
+      border-radius: 4px; cursor: pointer; transition: background 0.1s, border-color 0.1s;
+    }
+    .spd-btn:hover  { background: #15253a; border-color: #3a7aaa; }
+    .spd-btn.active { background: #163350; border-color: #5aaae0; color: #fff; }
+
+    /* ── Tower panel (permanent bottom bar) ────────────────────────────────── */
+    #tower-panel {
+      position: absolute; bottom: 0; left: 0; right: 0; height: 88px;
+      background: rgba(5,9,18,0.82);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      border-top: 1px solid rgba(255,255,255,0.07);
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 0 16px; z-index: 40; pointer-events: auto;
+    }
+    .tc-card {
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      background: rgba(255,255,255,0.03); border: 2px solid rgba(255,255,255,0.08);
+      border-radius: 8px; padding: 7px 10px; cursor: pointer;
+      width: 82px; min-width: 82px; position: relative; font-family: monospace;
+      transition: border-color 0.14s, background 0.14s, opacity 0.14s;
+    }
+    .tc-card:hover:not(.tc-disabled) { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.18); }
+    .tc-card.tc-disabled { opacity: 0.32; cursor: not-allowed; }
+    .tc-icon  { width: 26px; height: 26px; border-radius: 5px; flex-shrink: 0; }
+    .tc-name  { color: #ccd; font-size: 9px; font-weight: bold; letter-spacing: 0.02em; }
+    .tc-cost  { color: #ffd060; font-size: 9px; }
+    .tc-key   { position: absolute; top: 3px; right: 5px; color: rgba(255,255,255,0.22); font-size: 8px; }
+
+    /* ── Tower info panel (right side) ────────────────────────────────────── */
+    #info-panel {
+      position: absolute; right: 12px; top: 58px;
+      background: rgba(5,9,18,0.88);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 12px; padding: 14px 16px;
+      display: flex; flex-direction: column; gap: 8px;
+      z-index: 41; min-width: 200px;
+      pointer-events: none; opacity: 0;
+      transition: opacity 0.18s ease;
+    }
+    #info-panel.show { pointer-events: auto; opacity: 1; }
+    .ip-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+    .ip-title  { display: flex; flex-direction: column; gap: 4px; }
+    #ip-name   { color: #dde; font-size: 13px; font-weight: bold; font-family: monospace; }
+    #ip-tier   { font-size: 9px; padding: 2px 6px; border-radius: 3px; letter-spacing: 0.05em; display: inline-block; }
+    #ip-tier.t0 { background:#1a2030; color:#556; }
+    #ip-tier.t1 { background:#3a2800; color:#ffaa00; }
+    #ip-tier.t2 { background:#2a1040; color:#aa44ff; }
+    #ip-close  {
+      background: none; border: none; color: #445; font-size: 16px;
+      cursor: pointer; padding: 0; line-height: 1; transition: color 0.12s; flex-shrink: 0;
+    }
+    #ip-close:hover { color: #aab; }
+    .ip-divider { height: 1px; background: rgba(255,255,255,0.07); }
+    #ip-stats   { color: #667; font-size: 10px; font-family: monospace; line-height: 1.75; }
+    #ip-next    { color: #3a6; font-size: 9px; font-family: monospace; line-height: 1.55; }
+    #ip-upgrade {
+      background: #0d1f18; border: 1px solid #1a4030; color: #5dddaa;
+      font-family: monospace; font-size: 10px; padding: 7px 10px;
+      border-radius: 5px; cursor: pointer; text-align: left; transition: background 0.1s;
+    }
+    #ip-upgrade:hover:not(:disabled) { background: #122a20; }
+    #ip-upgrade:disabled { opacity: 0.3; cursor: not-allowed; }
+    #ip-sell {
+      background: #1a0d0d; border: 1px solid #3a1818; color: #ff7070;
+      font-family: monospace; font-size: 10px; padding: 7px 10px;
+      border-radius: 5px; cursor: pointer; transition: background 0.1s;
+    }
+    #ip-sell:hover { background: #2a1010; }
+
+    /* ── Wave announce ────────────────────────────────────────────────────── */
+    @keyframes wa-fade {
+      0%     { opacity: 0; transform: translate(-50%,-50%) scale(0.92); }
+      16.7%  { opacity: 1; transform: translate(-50%,-50%) scale(1.00); }
+      72.2%  { opacity: 1; transform: translate(-50%,-50%) scale(1.00); }
+      100%   { opacity: 0; transform: translate(-50%,-50%) scale(1.04); }
+    }
+    #wave-announce {
+      position: absolute; top: 42%; left: 50%;
+      transform: translate(-50%,-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      pointer-events: none; z-index: 50;
+      opacity: 0;
+    }
+    #wave-announce.show { animation: wa-fade 1.8s forwards; }
+    #wa-wave {
+      font-family: monospace; font-size: 64px; font-weight: bold;
+      letter-spacing: 0.2em; color: #ffffff;
+      text-shadow: 0 0 20px rgba(255,180,0,0.8), 0 0 60px rgba(255,140,0,0.4);
+      line-height: 1;
+    }
+    #wa-comp {
+      font-family: monospace; font-size: 13px; letter-spacing: 0.12em;
+      color: #ffcc88; opacity: 0.85;
+    }
+
+    /* ── Debug info ───────────────────────────────────────────────────────── */
+    #info {
+      position: absolute; bottom: 12px; left: 12px;
+      color: #667; font-size: 11px;
+      background: rgba(0,0,0,0.4); padding: 4px 10px; border-radius: 4px;
+      pointer-events: none;
+    }
+
+    /* ── End screen ───────────────────────────────────────────────────────── */
+    /* Overlay is pointer-events:none so clicks pass through to game canvas.  */
+    /* The panel itself is pointer-events:auto so buttons remain clickable.   */
+    #end-screen {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.78);
+      z-index: 100;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+    #end-screen.show { opacity: 1; }
+    #end-panel {
+      background: linear-gradient(160deg,rgba(10,15,28,0.99),rgba(6,8,16,0.99));
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px; padding: 44px 60px;
+      display: flex; flex-direction: column; align-items: center; gap: 12px;
+      box-shadow: 0 0 100px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.04);
+      min-width: 340px;
+      pointer-events: auto;   /* panel + children capture clicks */
+    }
+    #end-title { font-size:52px;font-weight:bold;letter-spacing:0.1em;line-height:1;font-family:monospace; }
+    #end-title.victory  { color:#ffd060;text-shadow:0 0 50px rgba(255,200,60,0.55); }
+    #end-title.gameover { color:#e04040;text-shadow:0 0 50px rgba(220,60,60,0.50); }
+    #end-divider { width:100%;height:1px;background:rgba(255,255,255,0.07);margin:4px 0; }
+    #end-msg   { color:#889;font-size:13px;letter-spacing:0.04em; }
+    #end-stats { color:#aab;font-size:11px;line-height:2;text-align:center; }
+    #end-best  { color:#556;font-size:10px;letter-spacing:0.06em; }
+    /* Speed row inside end panel */
+    #end-speed-row {
+      display: flex; align-items: center; gap: 6px; margin-top: 4px;
+    }
+    #end-speed-label {
+      color:#556;font-size:9px;letter-spacing:0.12em;margin-right:2px;
+    }
+    #end-restart {
+      background:#163350;border:2px solid #3a7aaa;color:#7ec8ff;
+      font-family:monospace;font-size:13px;padding:10px 28px;
+      border-radius:6px;cursor:pointer;margin-top:4px;transition:background 0.13s;
+      letter-spacing:0.05em;
+    }
+    #end-restart:hover { background:#1e4a70; }
+
+    /* ── Loading screen ─────────────────────────────────────────────────────── */
+    #loading-screen {
+      position:absolute; inset:0; z-index:200;
+      display:flex; align-items:center; justify-content:center;
+      background:#0f1117;
+      transition: opacity 0.4s ease;
+    }
+    #loading-screen.hidden { opacity:0; pointer-events:none; }
+    #loading-panel {
+      display:flex; flex-direction:column; align-items:center; gap:12px;
+      font-family:monospace;
+    }
+    #loading-title {
+      font-size:52px; font-weight:bold; letter-spacing:0.25em; color:#dde;
+      text-shadow:0 0 40px rgba(100,160,255,0.4);
+    }
+    #loading-sub { color:#445; font-size:11px; letter-spacing:0.15em; }
+    #loading-track {
+      width:260px; height:4px; background:rgba(255,255,255,0.06);
+      border-radius:2px; overflow:hidden;
+    }
+    #loading-bar {
+      height:100%; width:0%; background:linear-gradient(90deg,#3a7aaa,#7ec8ff);
+      border-radius:2px; transition:width 0.2s ease;
+    }
+    #loading-status { color:#334; font-size:10px; letter-spacing:0.1em; }
+  </style>
+</head>
+<body>
+
+  <!-- Loading screen -->
+  <div id="loading-screen">
+    <div id="loading-panel">
+      <div id="loading-title">ISO-TD</div>
+      <div id="loading-sub">Loading assets…</div>
+      <div id="loading-track"><div id="loading-bar"></div></div>
+      <div id="loading-status">0 / 14</div>
+    </div>
+  </div>
+
+  <!-- Top bar -->
+  <div id="topbar">
+    <div id="tb-left">
+      <span class="tb-stat">
+        <span class="tb-icon" style="color:#e05050">♥</span>
+        <span id="hud-lives" class="tb-val">20</span>
+      </span>
+      <div class="tb-div"></div>
+      <span class="tb-stat">
+        <span class="tb-icon" style="color:#ffd060">◈</span>
+        <span id="hud-gold" class="tb-val gold">150</span>
+      </span>
+      <div class="tb-div"></div>
+      <span class="tb-stat">
+        <span class="tb-lbl">WAVE</span>
+        <span id="hud-wave" class="tb-val" style="color:#667;font-size:14px">— / 12</span>
+      </span>
+      <div id="prep-badge">
+        <span id="prep-lbl">PREP</span>
+        <span id="hud-prep">8s</span>
+      </div>
+    </div>
+    <div id="tb-right">
+      <span id="wave-sub"></span>
+      <div id="speed-btns">
+        <button class="spd-btn active" data-speed="1">×1</button>
+        <button class="spd-btn"        data-speed="2">×2</button>
+        <button class="spd-btn"        data-speed="3">×3</button>
+      </div>
+      <button id="wave-btn">Start Wave 1</button>
+    </div>
+    <div id="prep-bar-wrap"><div id="prep-bar"></div></div>
+  </div>
+
+  <!-- Tower panel (always-visible bottom bar) -->
+  <div id="tower-panel"></div>
+
+  <!-- Tower info panel (right side, shown on tower click) -->
+  <div id="info-panel">
+    <div class="ip-header">
+      <div class="ip-title">
+        <div id="ip-name">Tower</div>
+        <span id="ip-tier" class="t0">BASE</span>
+      </div>
+      <button id="ip-close">✕</button>
+    </div>
+    <div class="ip-divider"></div>
+    <div id="ip-stats"></div>
+    <div id="ip-next"></div>
+    <button id="ip-upgrade">Upgrade</button>
+    <button id="ip-sell">Sell</button>
+  </div>
+
+  <!-- Wave announce overlay -->
+  <div id="wave-announce">
+    <div id="wa-wave">WAVE 1</div>
+    <div id="wa-comp"></div>
+  </div>
+
+  <!-- Debug info -->
+  <div id="info">—</div>
+
+  <!-- End screen (Game Over / Victory) -->
+  <div id="end-screen">
+    <div id="end-panel">
+      <div id="end-title"></div>
+      <div id="end-divider"></div>
+      <div id="end-msg"></div>
+      <div id="end-stats"></div>
+      <div id="end-best"></div>
+      <div id="end-speed-row">
+        <span id="end-speed-label">SPEED</span>
+        <button class="spd-btn active" data-speed="1">×1</button>
+        <button class="spd-btn"        data-speed="2">×2</button>
+        <button class="spd-btn"        data-speed="3">×3</button>
+      </div>
+      <button id="end-restart">Play Again</button>
+    </div>
+  </div>
+
+  <!-- Global error trap: surfaces JS errors on the loading screen so we
+       never get a silent hang if a module import or early script fails. -->
+  <script>
+    function _showLoadErr(msg) {
+      var sub = document.getElementById('loading-sub');
+      var sta = document.getElementById('loading-status');
+      if(sub) sub.textContent = 'Error — see console';
+      if(sta) sta.textContent = String(msg).slice(0,120);
+    }
+    window.addEventListener('error', function(e){ _showLoadErr(e.message || e); });
+    window.addEventListener('unhandledrejection', function(e){ _showLoadErr(e.reason?.message || e.reason || e); });
+  </script>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.158.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.158.0/examples/jsm/",
+      "three/addons/loaders/GLTFLoader.js": "https://unpkg.com/three@0.158.0/examples/jsm/loaders/GLTFLoader.js"
+    }
+  }
+  </script>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
