@@ -1,4 +1,7 @@
 kenny/
 .claude/
+GLB format/
+assets/
 *.ps1
 server.py
+server.pl
