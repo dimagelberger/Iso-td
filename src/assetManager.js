@@ -139,13 +139,8 @@ export class AssetManager {
 
   async preload(manifest, onProgress) {
     // Dynamic GLTFLoader import — CDN failure keeps the game running on fallbacks.
+    // v1-procedural branch: force fallback meshes to show pre-GLTF visual style
     let loader = null;
-    try {
-      const { GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js');
-      loader = new GLTFLoader();
-    } catch(e) {
-      console.warn('AssetManager: GLTFLoader unavailable, using fallbacks.', e?.message);
-    }
 
     // File cache: avoid fetching the same GLB twice (weapon-cannon.glb is shared
     // by tower_basic and tower_missile).
