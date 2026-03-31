@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>iso-td</title>
+  <title>ISO-TD · Classic</title>
   <style>
 @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap');
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -91,6 +91,15 @@ canvas { display: block; }
 #wave-btn:not(:disabled) { animation: btn-pulse 2.2s ease-in-out infinite; }
 #wave-btn:not(:disabled):hover { background: linear-gradient(135deg,#163a5c,#0e2a48); border-color: #4a9ad0; color: #aadcff; }
 #wave-btn:disabled { opacity: 0.28; cursor: not-allowed; animation: none; }
+
+/* ── v1 banner ───────────────────────────────────────────────────────────── */
+#v1-banner {
+  position:absolute; top:60px; left:50%; transform:translateX(-50%);
+  background:rgba(40,80,180,0.18); border:1px solid rgba(80,140,255,0.2);
+  border-radius:6px; padding:4px 18px; color:#5a7a9a; font-size:11px;
+  font-family:Rajdhani,monospace; letter-spacing:0.1em; z-index:39;
+  pointer-events:auto; white-space:nowrap;
+}
 
 /* ── Tower panel ─────────────────────────────────────────────────────────── */
 #tower-panel {
@@ -277,6 +286,9 @@ canvas { display: block; }
     </div>
     <div id="prep-bar-wrap"><div id="prep-bar"></div></div>
   </div>
+
+  <!-- v1 classic banner -->
+  <div id="v1-banner">v1 — Procedural Meshes · <a href="../" style="color:#5ab4f0">View v2 →</a></div>
 
   <!-- Tower panel (always-visible bottom bar) -->
   <div id="tower-panel"></div>
