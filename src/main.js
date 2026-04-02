@@ -269,6 +269,7 @@ renderer.domElement.addEventListener('touchmove', e => {
 }, { passive: true });
 
 renderer.domElement.addEventListener('touchend', () => {
-  // Reset drag flag after a short delay so ui.js touchend can read it
-  setTimeout(() => { state.touchDragging = false; }, 50);
+  // Delay reset so the synthetic click (fires ~0ms after touchend) still
+  // sees touchDragging=true when the user was panning, suppressing placement.
+  setTimeout(() => { state.touchDragging = false; }, 80);
 }, { passive: true });

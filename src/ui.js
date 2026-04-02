@@ -484,16 +484,17 @@ export function initUI() {
   }
 
   // Mousemove + click
+  // Mouse hover (desktop)
   window.addEventListener('mousemove', e => _updatePointer(e.clientX, e.clientY));
-  window.addEventListener('click', e => _handleTap(e.target));
 
-  // Touch: tap to place/select (drag + pinch handled by main.js camera controls)
-  window.addEventListener('touchend', e => {
-    if(state.touchDragging) return;   // finger was panning — ignore as tap
-    const t = e.changedTouches[0];
-    _updatePointer(t.clientX, t.clientY);
-    _handleTap(t.target);
-  }, { passive: true });
+  // Click / tap — browser synthesises a click from touch automatically.
+  // On mobile, _updatePointer runs first so the raycaster is current.
+  window.addEventListener('click', e => {
+    if(state.touchDragging) return;  // swipe/pan ended — not a tap
+    // For touch: update pointer position before raycasting
+    _updatePointer(e.clientX, e.clientY);
+    _handleTap(e.target);
+  });
 
   // Resize
   window.addEventListener('resize', () => {

@@ -7,12 +7,12 @@
   <style>
 @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap');
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: #080c18; overflow: hidden; font-family: 'Rajdhani', monospace; }
-canvas { display: block; touch-action: none; }
+html, body { background: #080c18; overflow: hidden; height: 100%; touch-action: none; font-family: 'Rajdhani', monospace; }
+canvas { display: block; touch-action: none; position: absolute; top: 0; left: 0; }
 
 /* ── Top bar ─────────────────────────────────────────────────────────────── */
 #topbar {
-  position: absolute; top: 0; left: 0; right: 0; height: 60px;
+  position: fixed; top: 0; left: 0; right: 0; height: 60px;
   background: linear-gradient(180deg, rgba(6,10,22,0.97) 0%, rgba(4,7,16,0.92) 100%);
   backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
   border-bottom: 1px solid rgba(80,140,255,0.15);
@@ -94,7 +94,7 @@ canvas { display: block; touch-action: none; }
 
 /* ── Tower panel ─────────────────────────────────────────────────────────── */
 #tower-panel {
-  position: absolute; bottom: 0; left: 0; right: 0; height: 90px;
+  position: fixed; bottom: 0; left: 0; right: 0; height: 90px;
   background: linear-gradient(180deg, rgba(4,7,16,0.90) 0%, rgba(6,10,22,0.97) 100%);
   backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   border-top: 1px solid rgba(80,140,255,0.12);
