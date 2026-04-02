@@ -440,10 +440,10 @@ export function initUI() {
       selectTowerType(state.selectedTypeIdx === n - 1 ? -1 : n - 1);
   });
 
-  // Mousemove: tile hover highlight + ghost tower
-  window.addEventListener('mousemove', e => {
-    mouse.x = (e.clientX / window.innerWidth)  *  2 - 1;
-    mouse.y = (e.clientY / window.innerHeight) * -2 + 1;
+  // ── Shared pointer helpers (used by both mouse and touch) ────────────────
+  function _updatePointer(clientX, clientY) {
+    mouse.x = (clientX / window.innerWidth)  *  2 - 1;
+    mouse.y = (clientY / window.innerHeight) * -2 + 1;
     raycaster.setFromCamera(mouse, state.camera);
 
     if(hoveredTile) {
@@ -459,18 +459,17 @@ export function initUI() {
       hoveredTile = t;
       const { tileX: x, tileZ: z, onPath } = t.userData;
       const buildable = !onPath && !OCCUPIED.has(tileKey(x, z));
-      infoEl.textContent = `(${x},${z}) — ${onPath ? 'path' : buildable ? 'click to build' : 'occupied'}`;
+      infoEl.textContent = `(${x},${z}) — ${onPath ? 'path' : buildable ? 'tap to build' : 'occupied'}`;
       if(buildable && !state.activeTower && state.selectedTypeIdx >= 0) showGhost(x, z);
       else if(!state.activeTower) hideGhost();
     } else {
       infoEl.textContent = '—';
       if(!state.activeTower) hideGhost();
     }
-  });
+  }
 
-  // Click: place tower or show tower info panel
-  window.addEventListener('click', e => {
-    if(towerPanelEl.contains(e.target) || infoPanelEl.contains(e.target)) return;
+  function _handleTap(target) {
+    if(towerPanelEl.contains(target) || infoPanelEl.contains(target)) return;
     hideInfoPanel();
     if(!state.gameOver) {
       const towerHits = raycaster.intersectObjects([...towerMeshMap.keys()]);
@@ -482,7 +481,25 @@ export function initUI() {
     if(!hoveredTile || state.gameOver) return;
     const { tileX: col, tileZ: row, onPath } = hoveredTile.userData;
     if(!onPath && !OCCUPIED.has(tileKey(col, row))) placeTower(col, row);
-  });
+  }
+
+  // Mousemove + click
+  window.addEventListener('mousemove', e => _updatePointer(e.clientX, e.clientY));
+  window.addEventListener('click', e => _handleTap(e.target));
+
+  // Touch: move finger to highlight tile, lift to tap/place
+  window.addEventListener('touchmove', e => {
+    e.preventDefault();
+    const t = e.touches[0];
+    _updatePointer(t.clientX, t.clientY);
+  }, { passive: false });
+
+  window.addEventListener('touchend', e => {
+    e.preventDefault();
+    const t = e.changedTouches[0];
+    _updatePointer(t.clientX, t.clientY);
+    _handleTap(t.target);
+  }, { passive: false });
 
   // Resize
   window.addEventListener('resize', () => {
