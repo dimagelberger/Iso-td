@@ -489,12 +489,11 @@ export function initUI() {
 
   // Touch: tap to place/select (drag + pinch handled by main.js camera controls)
   window.addEventListener('touchend', e => {
-    e.preventDefault();
     if(state.touchDragging) return;   // finger was panning — ignore as tap
     const t = e.changedTouches[0];
     _updatePointer(t.clientX, t.clientY);
     _handleTap(t.target);
-  }, { passive: false });
+  }, { passive: true });
 
   // Resize
   window.addEventListener('resize', () => {

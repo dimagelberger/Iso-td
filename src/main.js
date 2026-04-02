@@ -206,11 +206,8 @@ assetManager.preload(MODEL_MANIFEST, (loaded, total) => {
 const ZOOM_MIN = 0.4, ZOOM_MAX = 2.2;
 const PAN_LIMIT = 8;   // max world-unit offset from centre
 
-// Camera right and screen-up projected onto ground plane (45° isometric)
-const _camRight    = new THREE.Vector3( 1, 0, -1).normalize();
-const _camUp       = new THREE.Vector3(-1, 0, -1).normalize();
-const _panOffset   = new THREE.Vector3();
-const _basePos     = camera.position.clone();
+const _panOffset = new THREE.Vector3();
+const _basePos   = camera.position.clone();
 
 let _touch1X = 0, _touch1Y = 0;
 let _pinchDist = 0;
@@ -225,6 +222,10 @@ function _applyCamera() {
   camera.position.copy(_basePos).add(_panOffset);
   camera.lookAt(_panOffset.x, 0, _panOffset.z);
 }
+
+// Set initial zoom — mobile portrait needs to zoom out to see the full map
+if(window.innerWidth < 600) state.cameraZoom = window.innerWidth < window.innerHeight ? 1.8 : 1.3;
+_applyCamera();
 
 renderer.domElement.addEventListener('touchstart', e => {
   if(e.touches.length === 1) {
