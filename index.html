@@ -99,14 +99,17 @@ canvas { display: block; }
   backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   border-top: 1px solid rgba(80,140,255,0.12);
   box-shadow: 0 -2px 24px rgba(0,0,0,0.5);
-  display: flex; align-items: center; justify-content: center; gap: 8px;
+  display: flex; align-items: center; justify-content: flex-start; gap: 8px;
   padding: 0 16px; z-index: 40; pointer-events: auto;
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
 }
+#tower-panel::-webkit-scrollbar { display: none; }
 .tc-card {
   display: flex; flex-direction: column; align-items: center; gap: 4px;
   background: rgba(255,255,255,0.03); border: 1.5px solid rgba(255,255,255,0.08);
   border-radius: 10px; padding: 8px 10px; cursor: pointer;
-  width: 84px; min-width: 84px; position: relative; font-family: 'Rajdhani', monospace;
+  width: 84px; min-width: 84px; flex-shrink: 0; position: relative; font-family: 'Rajdhani', monospace;
   transition: border-color 0.14s, background 0.14s, opacity 0.14s;
 }
 .tc-card:hover:not(.tc-disabled) { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.20); }
@@ -171,6 +174,28 @@ canvas { display: block; }
   text-shadow: 0 0 30px rgba(255,180,0,0.7), 0 0 80px rgba(255,140,0,0.3);
 }
 #wa-comp { font-family:'Rajdhani',monospace; font-size:14px; letter-spacing:0.12em; color:#ffcc88; opacity:0.85; }
+
+/* ── Mobile responsive ───────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  #topbar { height: 50px; padding: 0 10px; }
+  #tb-title { font-size: 16px; margin-right: 4px; }
+  .tb-chip { padding: 4px 8px; gap: 6px; }
+  .tb-chip-val { font-size: 16px; }
+  .tb-chip-lbl { font-size: 7px; }
+  .tb-chip-icon { font-size: 14px; }
+  .tb-div { margin: 0; }
+  #wave-sub { display: none; }
+  .spd-btn { font-size: 11px; padding: 4px 7px; }
+  #wave-btn { font-size: 12px; padding: 6px 14px; }
+  #in-game-restart { width: 30px; height: 30px; }
+  #tower-panel { height: 80px; }
+  .tc-card { width: 72px; min-width: 72px; padding: 6px 8px; }
+  .tc-icon { width: 32px; height: 32px; }
+  .tc-name { font-size: 9px; }
+  .tc-cost { font-size: 9px; }
+  #info-panel { right: 8px; left: 8px; top: auto; bottom: 88px; min-width: unset; }
+  #info { bottom: 88px; }
+}
 
 /* ── Debug info ──────────────────────────────────────────────────────────── */
 #info { position:absolute; bottom:100px; left:12px; color:#2a3a4a; font-size:10px; background:rgba(0,0,0,0.3); padding:3px 8px; border-radius:4px; pointer-events:none; font-family:monospace; }
