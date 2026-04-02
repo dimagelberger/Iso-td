@@ -175,6 +175,9 @@ canvas { display: block; }
 }
 #wa-comp { font-family:'Rajdhani',monospace; font-size:14px; letter-spacing:0.12em; color:#ffcc88; opacity:0.85; }
 
+/* ── Handle bar (hidden on desktop) ─────────────────────────────────────── */
+.ip-handle { display: none; }
+
 /* ── Mobile responsive ───────────────────────────────────────────────────── */
 @media (max-width: 600px) {
   #topbar { height: 50px; padding: 0 10px; }
@@ -193,8 +196,33 @@ canvas { display: block; }
   .tc-icon { width: 32px; height: 32px; }
   .tc-name { font-size: 9px; }
   .tc-cost { font-size: 9px; }
-  #info-panel { right: 8px; left: 8px; top: auto; bottom: 88px; min-width: unset; }
   #info { bottom: 88px; }
+
+  /* Bottom sheet */
+  #info-panel {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    top: auto; min-width: unset;
+    border-radius: 16px 16px 0 0;
+    border: 1px solid rgba(80,140,255,0.15);
+    padding: 8px 20px 20px;
+    transform: translateY(100%);
+    opacity: 1;
+    transition: transform 0.28s cubic-bezier(0.32,0.72,0,1);
+    padding-bottom: calc(80px + env(safe-area-inset-bottom));
+  }
+  #info-panel.show {
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+  .ip-handle {
+    display: block;
+    width: 36px; height: 4px;
+    background: rgba(255,255,255,0.18);
+    border-radius: 2px;
+    margin: 0 auto 10px;
+  }
+  #ip-upgrade, #ip-sell { padding: 11px 14px; font-size: 13px; }
 }
 
 /* ── Debug info ──────────────────────────────────────────────────────────── */
@@ -306,8 +334,9 @@ canvas { display: block; }
   <!-- Tower panel (always-visible bottom bar) -->
   <div id="tower-panel"></div>
 
-  <!-- Tower info panel (right side, shown on tower click) -->
+  <!-- Tower info panel (right side on desktop, bottom sheet on mobile) -->
   <div id="info-panel">
+    <div class="ip-handle"></div>
     <div class="ip-header">
       <div class="ip-title">
         <div id="ip-name">Tower</div>
