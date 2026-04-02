@@ -29,4 +29,7 @@ export const state = {
   // ── System objects (set by main.js before game starts) ───────────────────
   wm:              null,   // WaveManager instance
   particles:       null,   // ParticleSystem instance
+  // ── Camera control ───────────────────────────────────────────────────────
+  cameraZoom:      1.0,    // orthographic zoom multiplier (1 = default)
+  touchDragging:   false,  // true while finger is panning (suppresses tap)
 };

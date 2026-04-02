@@ -487,15 +487,10 @@ export function initUI() {
   window.addEventListener('mousemove', e => _updatePointer(e.clientX, e.clientY));
   window.addEventListener('click', e => _handleTap(e.target));
 
-  // Touch: move finger to highlight tile, lift to tap/place
-  window.addEventListener('touchmove', e => {
-    e.preventDefault();
-    const t = e.touches[0];
-    _updatePointer(t.clientX, t.clientY);
-  }, { passive: false });
-
+  // Touch: tap to place/select (drag + pinch handled by main.js camera controls)
   window.addEventListener('touchend', e => {
     e.preventDefault();
+    if(state.touchDragging) return;   // finger was panning — ignore as tap
     const t = e.changedTouches[0];
     _updatePointer(t.clientX, t.clientY);
     _handleTap(t.target);
@@ -504,10 +499,11 @@ export function initUI() {
   // Resize
   window.addEventListener('resize', () => {
     const aspect = window.innerWidth / window.innerHeight;
-    state.camera.left   = -VIEW * aspect;
-    state.camera.right  =  VIEW * aspect;
-    state.camera.top    =  VIEW;
-    state.camera.bottom = -VIEW;
+    const z = state.cameraZoom;
+    state.camera.left   = -VIEW * aspect * z;
+    state.camera.right  =  VIEW * aspect * z;
+    state.camera.top    =  VIEW * z;
+    state.camera.bottom = -VIEW * z;
     state.camera.updateProjectionMatrix();
     state.renderer.setSize(window.innerWidth, window.innerHeight);
     state.cssRenderer.setSize(window.innerWidth, window.innerHeight);

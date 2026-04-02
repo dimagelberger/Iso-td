@@ -201,3 +201,73 @@ assetManager.preload(MODEL_MANIFEST, (loaded, total) => {
   const sub = document.getElementById('loading-sub');
   if(sub) sub.textContent = 'Error: ' + (err?.message ?? err);
 });
+
+// ── Touch camera controls: 1-finger pan, 2-finger pinch-zoom ─────────────────
+const ZOOM_MIN = 0.4, ZOOM_MAX = 2.2;
+const PAN_LIMIT = 8;   // max world-unit offset from centre
+
+// Camera right and screen-up projected onto ground plane (45° isometric)
+const _camRight    = new THREE.Vector3( 1, 0, -1).normalize();
+const _camUp       = new THREE.Vector3(-1, 0, -1).normalize();
+const _panOffset   = new THREE.Vector3();
+const _basePos     = camera.position.clone();
+
+let _touch1X = 0, _touch1Y = 0;
+let _pinchDist = 0;
+let _dragMoved = false;
+
+function _applyCamera() {
+  const asp = window.innerWidth / window.innerHeight;
+  const z   = state.cameraZoom;
+  camera.left   = -VIEW * asp * z;  camera.right  = VIEW * asp * z;
+  camera.top    =  VIEW * z;        camera.bottom = -VIEW * z;
+  camera.updateProjectionMatrix();
+  camera.position.copy(_basePos).add(_panOffset);
+  camera.lookAt(_panOffset.x, 0, _panOffset.z);
+}
+
+renderer.domElement.addEventListener('touchstart', e => {
+  if(e.touches.length === 1) {
+    _touch1X   = e.touches[0].clientX;
+    _touch1Y   = e.touches[0].clientY;
+    _dragMoved = false;
+    state.touchDragging = false;
+  } else if(e.touches.length === 2) {
+    const dx = e.touches[0].clientX - e.touches[1].clientX;
+    const dy = e.touches[0].clientY - e.touches[1].clientY;
+    _pinchDist = Math.sqrt(dx*dx + dy*dy);
+    state.touchDragging = true;
+  }
+}, { passive: true });
+
+renderer.domElement.addEventListener('touchmove', e => {
+  if(e.touches.length === 2) {
+    // Pinch zoom
+    const dx   = e.touches[0].clientX - e.touches[1].clientX;
+    const dy   = e.touches[0].clientY - e.touches[1].clientY;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    state.cameraZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, state.cameraZoom * (_pinchDist / dist)));
+    _pinchDist = dist;
+    _applyCamera();
+  } else if(e.touches.length === 1) {
+    const cx = e.touches[0].clientX, cy = e.touches[0].clientY;
+    const ddx = cx - _touch1X, ddy = cy - _touch1Y;
+    if(!_dragMoved && Math.sqrt(ddx*ddx + ddy*ddy) < 8) return;
+    _dragMoved = true;
+    state.touchDragging = true;
+
+    // Screen pixels → world units
+    const unitsPerPx = (2 * VIEW * state.cameraZoom) / window.innerHeight;
+    const wx = (-ddx + ddy) / Math.SQRT2 * unitsPerPx;
+    const wz = ( ddx + ddy) / Math.SQRT2 * unitsPerPx;
+    _panOffset.x = Math.max(-PAN_LIMIT, Math.min(PAN_LIMIT, _panOffset.x + wx));
+    _panOffset.z = Math.max(-PAN_LIMIT, Math.min(PAN_LIMIT, _panOffset.z + wz));
+    _touch1X = cx; _touch1Y = cy;
+    _applyCamera();
+  }
+}, { passive: true });
+
+renderer.domElement.addEventListener('touchend', () => {
+  // Reset drag flag after a short delay so ui.js touchend can read it
+  setTimeout(() => { state.touchDragging = false; }, 50);
+}, { passive: true });
