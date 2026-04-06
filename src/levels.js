@@ -1,12 +1,12 @@
-// Level definitions for Iso-TD
-// Each level has waypoints (the path enemies follow) and wave compositions
+// Level definitions for Iso-TD  (15×15 grid, coords 0-14)
+// Blue dot = entry (row 0, top edge)   Red dot = exit (row/col 14, bottom or right edge)
 
 export const LEVELS = [
-  // ── Level 1: Zigzag (Easy) ────────────────────────────────────────────────
+  // ── Level 1: Zigzag (Easy) ─── 3-run left→right→left sweep ──────────────
   {
     name: 'Zigzag',
     difficulty: 'Easy',
-    waypoints: [[0,2],[16,2],[16,7],[3,7],[3,12],[19,12]],
+    waypoints: [[1,0],[1,4],[11,4],[11,8],[2,8],[2,12],[5,14]],
     waves: [
       [{ type:'normal', count:5, interval:1.4 }],
       [{ type:'fast',   count:5, interval:1.0 }],
@@ -21,11 +21,11 @@ export const LEVELS = [
     ],
   },
 
-  // ── Level 2: Spiral (Medium) ──────────────────────────────────────────────
+  // ── Level 2: S-Curve (Medium) ─── compact S, 3 turns ────────────────────
   {
-    name: 'Spiral',
+    name: 'S-Curve',
     difficulty: 'Medium',
-    waypoints: [[10,2],[18,2],[18,10],[2,10],[2,5],[14,5]],
+    waypoints: [[1,0],[1,2],[9,2],[9,7],[2,7],[2,11],[10,11],[10,14]],
     waves: [
       [{ type:'normal', count:6, interval:1.2 }],
       [{ type:'fast',   count:7, interval:0.9 }],
@@ -40,11 +40,11 @@ export const LEVELS = [
     ],
   },
 
-  // ── Level 3: Winding Path (Medium) ────────────────────────────────────────
+  // ── Level 3: Long Wind (Medium) ─── longer path, more turns ─────────────
   {
-    name: 'Winding Path',
+    name: 'Long Wind',
     difficulty: 'Medium',
-    waypoints: [[1,7],[7,1],[13,7],[7,13],[19,7]],
+    waypoints: [[4,0],[4,3],[12,3],[12,7],[3,7],[3,11],[12,11],[12,14]],
     waves: [
       [{ type:'normal', count:6, interval:1.1 }],
       [{ type:'fast',   count:6, interval:1.0 }],
@@ -59,11 +59,11 @@ export const LEVELS = [
     ],
   },
 
-  // ── Level 4: Tight Maze (Hard) ────────────────────────────────────────────
+  // ── Level 4: Snake (Hard) ─── 3 horizontal sweeps filling the grid ───────
   {
-    name: 'Tight Maze',
+    name: 'Snake',
     difficulty: 'Hard',
-    waypoints: [[2,2],[2,12],[18,12],[18,3],[9,3],[9,10]],
+    waypoints: [[1,0],[1,3],[12,3],[12,7],[2,7],[2,11],[12,11],[12,14]],
     waves: [
       [{ type:'normal', count:7, interval:1.0 }],
       [{ type:'fast',   count:8, interval:0.9 }],
@@ -78,11 +78,11 @@ export const LEVELS = [
     ],
   },
 
-  // ── Level 5: Long Road (Hard) ─────────────────────────────────────────────
+  // ── Level 5: Spiral (Hard) ─── entry top-right, spirals inward ───────────
   {
-    name: 'Long Road',
+    name: 'Spiral',
     difficulty: 'Hard',
-    waypoints: [[0,7],[5,2],[10,7],[15,2],[19,7]],
+    waypoints: [[9,0],[9,2],[2,2],[2,7],[7,7],[7,11],[14,11]],
     waves: [
       [{ type:'normal', count:8, interval:0.9 }],
       [{ type:'fast',   count:8, interval:0.8 }],
@@ -97,11 +97,11 @@ export const LEVELS = [
     ],
   },
 
-  // ── Level 6: Crossroads (Expert) ──────────────────────────────────────────
+  // ── Level 6: Hook (Expert) ─── entry top-right, wide C-shape left & back ─
   {
-    name: 'Crossroads',
+    name: 'Hook',
     difficulty: 'Expert',
-    waypoints: [[10,0],[10,8],[2,8],[2,14],[18,14]],
+    waypoints: [[11,0],[11,2],[2,2],[2,9],[12,9],[12,14]],
     waves: [
       [{ type:'normal', count:9, interval:0.8 }],
       [{ type:'fast',   count:9, interval:0.8 }],

@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { LEVELS, TOTAL_LEVELS, TOTAL_WAVES } from './levels.js';
 
 // ── Gameplay constants ────────────────────────────────────────────────────────
-export const COLS         = 20;
+export const COLS         = 15;
 export const ROWS         = 15;
 export const VIEW         = 9;
 export const HP_BAR_SCALE = 0.012;
