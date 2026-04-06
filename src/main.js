@@ -1,8 +1,10 @@
 import * as THREE from 'three';
 import { CSS3DRenderer } from 'three/addons/renderers/CSS3DRenderer.js';
 import {
-  COLS, ROWS, VIEW, PATH_TILES, tileKey, tileToWorld, WP_WORLD,
+  COLS, ROWS, VIEW, PATH_TILES, tileKey, tileToWorld, WP_WORLD, buildPathData,
+  TOTAL_LEVELS, getWaypoints,
 } from './constants.js';
+import { LEVELS } from './levels.js';
 import { state, enemies, towers, projectiles, tileObjects } from './state.js';
 import { assetManager, MODEL_MANIFEST } from './assetManager.js';
 import { ParticleSystem, updateFlashes } from './particles.js';
@@ -112,97 +114,110 @@ function updateProjectiles(dt) {
   }
 }
 
-// ── Preload assets, then start the render loop ────────────────────────────────
-const loadingScreenEl = document.getElementById('loading-screen');
-const loadingBarEl    = document.getElementById('loading-bar');
-const loadingStatusEl = document.getElementById('loading-status');
+// ── Level selection UI ────────────────────────────────────────────────────────
+const levelSelectEl = document.getElementById('level-select');
+const levelGridEl    = document.getElementById('level-grid');
+let selectedLevelIndex = 0;
 
-assetManager.preload(MODEL_MANIFEST, (loaded, total) => {
-  loadingBarEl.style.width    = (total > 0 ? (loaded / total) * 100 : 0) + '%';
-  loadingStatusEl.textContent = `${loaded} / ${total}`;
-}).then(() => {
+function initLevelSelection() {
+  levelGridEl.innerHTML = '';
+  LEVELS.forEach((level, idx) => {
+    const card = document.createElement('div');
+    card.className = 'level-card';
+    const diffClass = level.difficulty.toLowerCase();
+    card.innerHTML = `
+      <div class="level-name">${level.name}</div>
+      <div class="level-difficulty ${diffClass}">${level.difficulty}</div>
+      <div class="level-desc">Wave 1-10 with ${level.waves[4][0]?.type || 'boss'} boss</div>
+    `;
+    card.addEventListener('click', () => selectLevel(idx));
+    levelGridEl.appendChild(card);
+  });
+}
+
+function buildTileGrid() {
   // ── Build tile grid (path tiles use GLTF models) ────────────────────────────
   for(let row = 0; row < ROWS; row++) for(let col = 0; col < COLS; col++) {
     const onPath = PATH_TILES.has(tileKey(col, row));
     const px = col - COLS/2 + 0.5, pz = row - ROWS/2 + 0.5;
 
     if(onPath) {
-      // Invisible flat plane — handles raycasting and hover
-      const plane = new THREE.Mesh(
-        tileGeo,
-        new THREE.MeshBasicMaterial({ visible: false })
-      );
+      const plane = new THREE.Mesh(tileGeo, new THREE.MeshBasicMaterial({ visible: false }));
       plane.position.set(px, 0.01, pz);
-      plane.userData.tileX  = col;
-      plane.userData.tileZ  = row;
-      plane.userData.onPath = true;
-      scene.add(plane);
-      tileObjects.push(plane);
-
-      // GLTF tile model — purely visual
+      plane.userData.tileX  = col; plane.userData.tileZ  = row; plane.userData.onPath = true;
+      scene.add(plane); tileObjects.push(plane);
       const { key, rotY } = _pathTileType(col, row);
       const model = assetManager.get(key);
-      model.position.set(px, 0, pz);
-      model.rotation.y = rotY;
-      scene.add(model);
-
-      // Capture original material colors so hover can restore them exactly
+      model.position.set(px, 0, pz); model.rotation.y = rotY; scene.add(model);
       const origColors = new Map();
       model.traverse(o => { if(o.isMesh) origColors.set(o, o.material.color.clone()); });
       plane.userData.setHoverColor   = hex => model.traverse(o => { if(o.isMesh) o.material.color.setHex(hex); });
       plane.userData.clearHoverColor = ()  => model.traverse(o => { if(o.isMesh) o.material.color.copy(origColors.get(o)); });
-
     } else {
-      // Grass tile — plain coloured plane (raycasting + hover work as normal)
       const even = ((row + col) % 2 === 0);
       const base = even ? C_EVEN : C_ODD;
       const mesh = new THREE.Mesh(tileGeo, new THREE.MeshBasicMaterial({ color: base.clone() }));
       mesh.position.set(px, 0, pz);
-      mesh.userData.tileX     = col;
-      mesh.userData.tileZ     = row;
-      mesh.userData.onPath    = false;
-      mesh.userData.baseColor = base.clone();
-      scene.add(mesh);
-      tileObjects.push(mesh);
+      mesh.userData.tileX  = col; mesh.userData.tileZ  = row; mesh.userData.onPath = false; mesh.userData.baseColor = base.clone();
+      scene.add(mesh); tileObjects.push(mesh);
     }
   }
-
-  // ── Scatter decorative detail models on grass tiles ────────────────────────
   const DETAIL_KEYS = ['detail_tree', 'detail_rocks', 'detail_dirt'];
   const _hash = (c, r) => (((c * 73856093) ^ (r * 19349663)) >>> 0);
   for(let row = 0; row < ROWS; row++) for(let col = 0; col < COLS; col++) {
     if(PATH_TILES.has(tileKey(col, row))) continue;
     const h = _hash(col, row);
-    if((h % 10) > 2) continue;  // ~30% of non-path tiles
+    if((h % 10) > 2) continue;
     const key = DETAIL_KEYS[h % DETAIL_KEYS.length];
-    const dm  = assetManager.get(key);
+    const dm = assetManager.get(key);
     if(!dm || dm.children.length === 0) continue;
     const px = col - COLS/2 + 0.5, pz = row - ROWS/2 + 0.5;
-    dm.position.set(px, 0, pz);
-    dm.rotation.y = (h % 4) * Math.PI / 2;
-    scene.add(dm);
+    dm.position.set(px, 0, pz); dm.rotation.y = (h % 4) * Math.PI / 2; scene.add(dm);
   }
+}
 
-  loadingScreenEl.classList.add('hidden');
+function startGame() {
   updateTowerCardIcons();
   tryLoadSave();
   updateHUD();
-
   const clock = new THREE.Clock();
   (function animate() {
     requestAnimationFrame(animate);
     const dt = Math.min(clock.getDelta(), 0.1) * state.gameSpeed;
     if(!state.gameOver) {
-      updateEnemies(dt);
-      updateTowers(dt);
-      updateProjectiles(dt);
-      state.wm.update(dt);
+      updateEnemies(dt); updateTowers(dt); updateProjectiles(dt); state.wm.update(dt);
     }
-    state.particles.update(dt);
-    updateFlashes(dt);
-    renderer.render(scene, camera);
-    cssRenderer.render(scene, camera);
+    state.particles.update(dt); updateFlashes(dt);
+    renderer.render(scene, camera); cssRenderer.render(scene, camera);
   })();
+}
+
+function selectLevel(levelIndex) {
+  selectedLevelIndex = levelIndex;
+  buildPathData(getWaypoints(levelIndex));
+  state.wm = new WaveManager(levelIndex);
+  levelSelectEl.classList.add('hidden');
+  buildTileGrid();
+  startGame();
+}
+
+// ── Preload assets, then start the render loop ────────────────────────────────
+const loadingScreenEl = document.getElementById('loading-screen');
+const loadingBarEl    = document.getElementById('loading-bar');
+const loadingStatusEl = document.getElementById('loading-status');
+
+// Initialize level selection UI
+initLevelSelection();
+// Hide loading screen and show level selection
+setTimeout(() => {
+  loadingScreenEl.classList.add('hidden');
+}, 300);
+
+assetManager.preload(MODEL_MANIFEST, (loaded, total) => {
+  loadingBarEl.style.width    = (total > 0 ? (loaded / total) * 100 : 0) + '%';
+  loadingStatusEl.textContent = `${loaded} / ${total}`;
+}).then(() => {
+  // Assets preloaded successfully; level selection is ready
 }).catch(err => {
   console.error('Preload failed:', err);
   const sub = document.getElementById('loading-sub');
