@@ -425,8 +425,10 @@ export function initUI() {
     hideInfoPanel();
   });
 
-  // In-game restart button
-  document.getElementById('in-game-restart').addEventListener('click', resetGame);
+  // In-game restart button — requires confirmation to prevent accidental taps
+  document.getElementById('in-game-restart').addEventListener('click', () => {
+    if(window.confirm('Restart the game?')) resetGame();
+  });
 
   // End screen restart
   endRestartEl.addEventListener('click', resetGame);

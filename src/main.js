@@ -22,12 +22,19 @@ camera.lookAt(0, 0, 0);
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.domElement.style.cssText = 'position:absolute;top:0';
+// Set position individually — cssText would wipe width/height set by setSize(),
+// causing the canvas to display at physical-pixel size on high-DPR devices.
+renderer.domElement.style.position = 'absolute';
+renderer.domElement.style.top      = '0';
+renderer.domElement.style.left     = '0';
 document.body.appendChild(renderer.domElement);
 
 const cssRenderer = new CSS3DRenderer();
 cssRenderer.setSize(window.innerWidth, window.innerHeight);
-cssRenderer.domElement.style.cssText = 'position:absolute;top:0;pointer-events:none';
+cssRenderer.domElement.style.position      = 'absolute';
+cssRenderer.domElement.style.top           = '0';
+cssRenderer.domElement.style.left          = '0';
+cssRenderer.domElement.style.pointerEvents = 'none';
 document.body.appendChild(cssRenderer.domElement);
 
 // Publish to shared state so all modules can access renderers
