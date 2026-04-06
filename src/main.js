@@ -219,8 +219,8 @@ function _applyCamera() {
   camera.left   = -VIEW * asp * z;  camera.right  = VIEW * asp * z;
   camera.top    =  VIEW * z;        camera.bottom = -VIEW * z;
   camera.updateProjectionMatrix();
+  // Translate only — never re-call lookAt, it corrupts the view matrix
   camera.position.copy(_basePos).add(_panOffset);
-  camera.lookAt(_panOffset.x, 0, _panOffset.z);
 }
 
 // Set initial zoom — mobile portrait needs to zoom out to see the full map
