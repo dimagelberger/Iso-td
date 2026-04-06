@@ -1,5 +1,5 @@
 import {
-  WAVE_DEFS, TOTAL_WAVES, PREP_SECS, ENEMY_TYPES, HP_SCALE, SPEED_SCALE,
+  getWaveDefs, TOTAL_WAVES, PREP_SECS, ENEMY_TYPES, HP_SCALE, SPEED_SCALE,
 } from './constants.js';
 import { state, enemies } from './state.js';
 import { Enemy } from './enemies.js';
@@ -14,9 +14,9 @@ const hudPrep   = document.getElementById('hud-prep');
 
 // ── WaveRunner — owns spawning + enemy-count for one wave ────────────────────
 class WaveRunner {
-  constructor(n) {
+  constructor(n, waves = getWaveDefs()) {
     this.waveNum      = n;
-    this.groups       = WAVE_DEFS[n - 1].map(g => ({ ...g }));
+    this.groups       = waves[n - 1].map(g => ({ ...g }));
     this.groupTimer   = 0;
     this.groupCount   = 0;
     this._curGroup    = null;
@@ -63,7 +63,9 @@ class WaveRunner {
 
 // ── WaveManager ───────────────────────────────────────────────────────────────
 export class WaveManager {
-  constructor() {
+  constructor(levelIndex = 0) {
+    this.levelIndex  = levelIndex;
+    this.waves       = getWaveDefs(levelIndex);
     this.runners     = [];     // active WaveRunner instances (max 2)
     this.nextWaveNum = 1;      // next wave number to be launched
     this.waveNum     = 0;      // last launched wave (for HUD display)
@@ -85,7 +87,7 @@ export class WaveManager {
     this.prepTimer   = 0;
     prepBadge.style.display = 'none';
     waveSubEl.textContent   = '';
-    const runner = new WaveRunner(n);
+    const runner = new WaveRunner(n, this.waves);
     this.runners.push(runner);
     showAnnounce(n);
     updateHUD();

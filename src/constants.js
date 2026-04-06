@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { LEVELS, TOTAL_LEVELS, TOTAL_WAVES } from './levels.js';
 
 // ── Gameplay constants ────────────────────────────────────────────────────────
 export const COLS         = 20;
@@ -9,6 +10,7 @@ export const PROJ_SPEED   = 8;
 export const START_GOLD   = 1000;
 export const START_LIVES  = 20;
 export const PREP_SECS    = 8;
+export { TOTAL_LEVELS, TOTAL_WAVES };
 export const KICK_DUR          = 0.12;
 export const KICK_SCALE        = 1.3;
 export const TURRET_ROT_SPEED  = 8;
@@ -39,22 +41,18 @@ export const ENEMY_TYPES = {
 export const HP_SCALE    = 1.20;
 export const SPEED_SCALE = 1.04;
 
-// ── Wave definitions ──────────────────────────────────────────────────────────
-// Level 1 (waves 1-5): 5 enemies each, escalating types; wave 5 = boss.
-// Level 2 (waves 6-10): 6/7/8/9 enemies, mixed; wave 10 = boss.
-export const TOTAL_WAVES = 10;
-export const WAVE_DEFS = [
-  /* 1 */ [{ type:'normal', count:5, interval:1.4 }],
-  /* 2 */ [{ type:'fast',   count:5, interval:1.0 }],
-  /* 3 */ [{ type:'tank',   count:5, interval:2.0 }],
-  /* 4 */ [{ type:'normal', count:3, interval:1.2 }, { type:'fast', count:2, interval:0.9 }],
-  /* 5 */ [{ type:'boss',   count:1, interval:0   }],
-  /* 6 */ [{ type:'normal', count:4, interval:1.2 }, { type:'fast', count:2, interval:0.8 }],
-  /* 7 */ [{ type:'normal', count:4, interval:1.1 }, { type:'tank', count:3, interval:1.8 }],
-  /* 8 */ [{ type:'fast',   count:5, interval:0.7 }, { type:'tank', count:3, interval:1.8 }],
-  /* 9 */ [{ type:'normal', count:3, interval:1.0 }, { type:'fast', count:3, interval:0.7 }, { type:'tank', count:3, interval:1.8 }],
-  /*10 */ [{ type:'boss',   count:2, interval:5.0 }],
-];
+// ── Level data helpers ────────────────────────────────────────────────────
+export function getCurrentLevel(levelIndex = 0) {
+  return LEVELS[Math.max(0, Math.min(levelIndex, LEVELS.length - 1))];
+}
+
+export function getWaveDefs(levelIndex = 0) {
+  return getCurrentLevel(levelIndex).waves;
+}
+
+export function getWaypoints(levelIndex = 0) {
+  return getCurrentLevel(levelIndex).waypoints;
+}
 
 // ── Tower definitions ─────────────────────────────────────────────────────────
 // kind      : 'basic' | 'sniper' | 'laser' | 'missile'  — drives Tower logic
@@ -94,17 +92,28 @@ export const tileToWorld = (col, row, y=0) =>
 
 export const tileKey = (c, r) => `${c},${r}`;
 
-// ── Waypoints & path ──────────────────────────────────────────────────────────
-export const WAYPOINTS = [ [0,2],[16,2],[16,7],[3,7],[3,12],[19,12] ];
-export const WP_WORLD  = WAYPOINTS.map(([c,r]) => tileToWorld(c, r, 0));
-export const WP_DISTS  = WP_WORLD.slice(0,-1).map((v,i) => v.distanceTo(WP_WORLD[i+1]));
+// ── Waypoints & path helpers ──────────────────────────────────────────────
+// Call buildPathData() after loading a level to compute WP_WORLD, WP_DISTS, PATH_TILES
+export let WAYPOINTS = LEVELS[0].waypoints;  // default to level 0
+export let WP_WORLD  = [];
+export let WP_DISTS  = [];
+export let PATH_TILES = new Set();
 
-export const PATH_TILES = new Set();
-for (let i = 0; i < WAYPOINTS.length - 1; i++) {
-  const [c1,r1] = WAYPOINTS[i], [c2,r2] = WAYPOINTS[i+1];
-  if (c1 === c2) { for (let r = Math.min(r1,r2); r <= Math.max(r1,r2); r++) PATH_TILES.add(tileKey(c1,r)); }
-  else           { for (let c = Math.min(c1,c2); c <= Math.max(c1,c2); c++) PATH_TILES.add(tileKey(c,r1)); }
+export function buildPathData(waypoints = WAYPOINTS) {
+  WAYPOINTS = waypoints;
+  WP_WORLD  = waypoints.map(([c,r]) => tileToWorld(c, r, 0));
+  WP_DISTS  = WP_WORLD.slice(0,-1).map((v,i) => v.distanceTo(WP_WORLD[i+1]));
+
+  PATH_TILES.clear();
+  for (let i = 0; i < waypoints.length - 1; i++) {
+    const [c1,r1] = waypoints[i], [c2,r2] = waypoints[i+1];
+    if (c1 === c2) { for (let r = Math.min(r1,r2); r <= Math.max(r1,r2); r++) PATH_TILES.add(tileKey(c1,r)); }
+    else           { for (let c = Math.min(c1,c2); c <= Math.max(c1,c2); c++) PATH_TILES.add(tileKey(c,r1)); }
+  }
 }
+
+// Initialize with level 0
+buildPathData();
 
 // ── Save keys ─────────────────────────────────────────────────────────────────
 export const SAVE_KEY = 'iso-td-v1';
