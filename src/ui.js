@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import {
-  TOWER_DEFS, WAVE_DEFS, TOTAL_WAVES, UPGRADE_TIERS,
+  TOWER_DEFS, getWaveDefs, TOTAL_WAVES, UPGRADE_TIERS,
   LASER_HEAT_MAX, START_GOLD, START_LIVES,
   tileKey, tileToWorld, VIEW, SAVE_KEY, BEST_KEY,
 } from './constants.js';
@@ -64,7 +64,8 @@ export function updateHUD() {
 // ── Wave announce ─────────────────────────────────────────────────────────────
 export function showAnnounce(n) {
   waWaveEl.textContent = `WAVE ${n}`;
-  const def = WAVE_DEFS[n - 1];
+  const waves = getWaveDefs(state.wm?.levelIndex ?? 0);
+  const def = waves[n - 1];
   const compParts = def.map(g => {
     const label = g.type.charAt(0).toUpperCase() + g.type.slice(1);
     return `${g.count} ${label}`;
@@ -76,7 +77,8 @@ export function showAnnounce(n) {
 }
 
 export function setWaveSub(n) {
-  waveSubEl.textContent = WAVE_DEFS[n - 1].map(g => `${g.count}× ${g.type}`).join(' · ');
+  const waves = getWaveDefs(state.wm?.levelIndex ?? 0);
+  waveSubEl.textContent = waves[n - 1].map(g => `${g.count}× ${g.type}`).join(' · ');
 }
 
 // ── Tower info panel ──────────────────────────────────────────────────────────
