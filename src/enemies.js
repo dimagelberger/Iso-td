@@ -40,6 +40,7 @@ export class Enemy {
       }
     });
     this._mat = this._mats[0] || new THREE.MeshToonMaterial();
+    this._waveRunner = null;
     this.mesh.position.copy(WP_WORLD[0]);
     this._yOff = def.h;
     state.scene.add(this.mesh);
@@ -143,6 +144,7 @@ export class Enemy {
   }
 
   destroy() {
+    if(this._waveRunner) this._waveRunner.onEnemyGone();
     state.scene.remove(this.mesh);
     state.scene.remove(this.sprite);
     if(this.sprite.element.parentNode) this.sprite.element.remove();

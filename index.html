@@ -183,14 +183,29 @@ canvas { display: block; touch-action: none; position: absolute; top: 0; left: 0
   #topbar { height: 50px; padding: 0 10px; }
   #tb-title { font-size: 16px; margin-right: 4px; }
   .tb-chip { padding: 4px 8px; gap: 6px; }
-  .tb-chip-val { font-size: 16px; }
+  .tb-chip-val { font-size: 15px; }
   .tb-chip-lbl { font-size: 7px; }
-  .tb-chip-icon { font-size: 14px; }
+  .tb-chip-icon { font-size: 13px; }
   .tb-div { margin: 0; }
+  /* Wave chip hidden — number shown in floating wave button */
+  #tb-chip-wave { display: none; }
+  /* Prep badge hidden — countdown shown in floating wave button text */
+  #prep-badge { display: none !important; }
   #wave-sub { display: none; }
   .spd-btn { font-size: 11px; padding: 4px 7px; }
-  #wave-btn { font-size: 12px; padding: 6px 14px; }
   #in-game-restart { width: 30px; height: 30px; }
+  /* Float the wave button above the tower panel for easy thumb access */
+  #wave-btn {
+    position: fixed;
+    bottom: 88px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 45;
+    white-space: nowrap;
+    font-size: 14px;
+    padding: 10px 26px;
+    border-radius: 10px;
+  }
   #tower-panel { height: 80px; }
   .tc-card { width: 72px; min-width: 72px; padding: 6px 8px; }
   .tc-icon { width: 32px; height: 32px; }
@@ -306,7 +321,7 @@ canvas { display: block; touch-action: none; position: absolute; top: 0; left: 0
           <span id="hud-gold" class="tb-chip-val gold">1000</span>
         </div>
       </div>
-      <div class="tb-chip">
+      <div class="tb-chip" id="tb-chip-wave">
         <span class="tb-chip-icon" style="color:#78c8ff">◎</span>
         <div class="tb-chip-body">
           <span class="tb-chip-lbl">Wave</span>

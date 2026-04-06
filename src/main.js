@@ -203,8 +203,8 @@ assetManager.preload(MODEL_MANIFEST, (loaded, total) => {
 });
 
 // ── Touch camera controls: 1-finger pan, 2-finger pinch-zoom ─────────────────
-const ZOOM_MIN = 0.4, ZOOM_MAX = 2.2;
-const PAN_LIMIT = 8;   // max world-unit offset from centre
+const ZOOM_MIN = 0.5, ZOOM_MAX = 2.5;
+const PAN_LIMIT = 6;   // max world-unit offset from centre
 
 const _panOffset = new THREE.Vector3();
 const _basePos   = camera.position.clone();
@@ -221,6 +221,8 @@ function _applyCamera() {
   camera.updateProjectionMatrix();
   // Translate only — never re-call lookAt, it corrupts the view matrix
   camera.position.copy(_basePos).add(_panOffset);
+  // Keep matrixWorld in sync so raycasting is accurate between render frames
+  camera.updateMatrixWorld();
 }
 
 // Set initial zoom — mobile portrait needs to zoom out to see the full map

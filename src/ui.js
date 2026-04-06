@@ -264,10 +264,10 @@ export function tryLoadSave() {
     }
     const n = s.waveNum || 0;
     if(n > 0 && n < TOTAL_WAVES) {
-      state.wm.waveNum      = n;
-      waveBtnEl.textContent = `Start Wave ${n + 1}`;
-      waveBtnEl.disabled    = false;
+      state.wm.waveNum     = n;
+      state.wm.nextWaveNum = n + 1;
       setWaveSub(n + 1);
+      state.wm._updateBtn();
     }
     updateHUD();
   } catch(e) { clearSave(); }
@@ -386,11 +386,11 @@ export function initUI() {
     });
   });
 
-  // Wave button
+  // Wave button — starts immediately or skips the auto-prep countdown
   waveBtnEl.addEventListener('click', () => {
-    if(state.gameOver || state.wm.phase !== 'idle') return;
+    if(state.gameOver || !state.wm.canStart) return;
     hideInfoPanel();
-    if(state.wm.waveNum === 0) state.wm.startWave(1); else state.wm.beginPrep();
+    state.wm.startWave();
   });
   setWaveSub(1);
 
@@ -444,6 +444,8 @@ export function initUI() {
   function _updatePointer(clientX, clientY) {
     mouse.x = (clientX / window.innerWidth)  *  2 - 1;
     mouse.y = (clientY / window.innerHeight) * -2 + 1;
+    // Ensure matrixWorld is current (camera may have moved since last render)
+    state.camera.updateMatrixWorld();
     raycaster.setFromCamera(mouse, state.camera);
 
     if(hoveredTile) {
